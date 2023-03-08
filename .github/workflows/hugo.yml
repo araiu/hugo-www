@@ -8,6 +8,12 @@ on:
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
+    inputs:
+      buildDrafts:
+        description: 'True to build Drafts as well'
+        required: false
+        default: false
+        type: boolean
 
 # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
@@ -47,7 +53,19 @@ jobs:
         uses: actions/configure-pages@v3
       - name: Install Node.js dependencies
         run: "[[ -f package-lock.json || -f npm-shrinkwrap.json ]] && npm ci || true"
+      - name: Build with Hugo (including Drafts)
+        if: ${{ inputs.buildDrafts == 'true' }}
+        env:
+          # For maximum backward compatibility with Hugo modules
+          HUGO_ENVIRONMENT: production
+          HUGO_ENV: production
+        run: |
+          hugo \
+            --buildDrafts \
+            --minify \
+            --baseURL "${{ steps.pages.outputs.base_url }}/"
       - name: Build with Hugo
+        if: ${{ inputs.buildDrafts == 'false' }}
         env:
           # For maximum backward compatibility with Hugo modules
           HUGO_ENVIRONMENT: production
